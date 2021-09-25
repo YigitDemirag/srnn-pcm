@@ -145,7 +145,7 @@ class XBar:
                # back up weight
                G_tmp = self.G[0] - self.G[1]
                # reset the synapses
-               self.reset(mask=ref_mask)
+               self.reset(tp=tp, mask=ref_mask)
 
                # calculate number of pulses for each pair
                num_pulse[0] = ( G_tmp * (G_tmp>0) / eps).unsqueeze(0)
@@ -228,7 +228,7 @@ class XBar:
                # back up weight
                G_tmp = self.G[0]-self.G[1]
                # reset the synapse
-               self.reset(mask=ref_mask)
+               self.reset(tp=tp, mask=ref_mask)
 
                # calculate number of pulses for each pair
                num_pulse[0] = ( G_tmp * (G_tmp>0) / eps).unsqueeze(0)
@@ -265,7 +265,7 @@ class XBar:
            Gsign_pos = torch.gather(self.G, 0, meme.unsqueeze(1))[0]
            cond = torch.abs(dG) > (10 - Gsign_pos)
            reset_ind=torch.stack((torch.logical_and(cond, corr), torch.logical_and(torch.abs(1-corr), cond)))
-           self.reset(mask=reset_ind)
+           self.reset(tp=tp, mask=reset_ind)
            dG = G_target - (self.G[0]-self.G[1]).squeeze(0)
 
            # refresh (If weights are saturated at high G, rewrite)
@@ -276,7 +276,7 @@ class XBar:
                # back up weight
                G_tmp = (self.G[0]-self.G[1]) # 1,3,3
                # reset the synapse
-               self.reset(mask=ref_mask)
+               self.reset(tp=tp, mask=ref_mask)
 
                # calculate number of pulses for each pair
                num_pulse[0] = ( G_tmp * (G_tmp>0) / eps).unsqueeze(0)
@@ -337,7 +337,7 @@ if __name__ == '__main__':
                 Gf = xbar.read(t=tp+T0, T0=T0, perf=args.perf)
                 tp = tp + T0
                 Gtrace[i, pulse_no] = torch.sum(Gf[mask],dim=0)
-            xbar.reset(mask=torch.ones(2,args.xbar_n,1000,1000, device=device).bool())
+            xbar.reset(tp=tp, mask=torch.ones(2,args.xbar_n,1000,1000, device=device).bool())
 
         # Plotting
         fig = plt.figure(figsize=(8, 6))
@@ -372,7 +372,7 @@ if __name__ == '__main__':
         mask = torch.zeros(2, args.xbar_n, 10,10).bool()
         mask[0,0:args.xbar_n,1,4] = True
 
-        xbar.reset(mask=mask)
+        xbar.reset(tp=0, mask=mask)
         r = torch.zeros(800)
         for t in range(1,800,1):
             r[t]=torch.sum(xbar.read(t,T0=38.6,perf=args.perf)[mask], dim=0)
@@ -391,7 +391,7 @@ if __name__ == '__main__':
         # Figure 7 - Replicate
         xbar = XBar(size=(100,100), N=args.xbar_n, res=args.xbar_res, scale=args.xbar_scale, prob_scale=args.prob_scale, device=device)
         mask = torch.ones(100, 100, device=device).repeat(2, args.xbar_n, 1, 1).bool()
-        xbar.reset(mask=mask, G0=0.1)
+        xbar.reset(tp=0, mask=mask, G0=0.1)
 
         r = torch.zeros(300)
         for i in range(1, 300, 1):
